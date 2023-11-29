@@ -1,0 +1,20 @@
+# /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# AUTORES: Santiago Garea Cidre (s.garea@udc.es)
+#          Daniel Queijo Seoane (daniel.queijo.seoane@udc.es)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+
+# Ignorar todos los archivos
+*
+
+# Excepto
+!.gitignore
+!README.md
+!p3.c
+!cmd_functions.h
+!cmd_functions.c
+!list.h
+!list.c
+!makefile
+!tests/
+!tests/test_deltree.sh
