@@ -6,7 +6,6 @@ AUTORES: Santiago Garea Cidre (s.garea@udc.es)
 #include "list.h"
 
 #include "cmd_functions.h"
-// #include "my_strtok.h"
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~DECLARACIÓN~~~DE~~~FUNCIONES~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,28 +130,6 @@ int chopCmd(char cmd[MAX_BUFFER], char *tokens[]) {
         i++;
     return i;
 }
-// bool readInputs(char **cmd, char ***arguments, int *nArguments, tListC *commandList) {
-//     ssize_t bytesRead; // ssize_t y size_t son unsigned int
-//     size_t bufferSize = 0;
-//     char *delimiters = " \n\t";
-
-//     bytesRead = getline(cmd, &bufferSize, stdin); // getline devuelve el número de bytes escritos si no hay errores
-//     cmd[bytesRead - 1] = '\0';
-
-//     printf("%s\n", *cmd); // Imprimimos el comando introducido por el usuario
-//     if (!insertElement(*cmd, commandList, allocateItemC)) {
-//         perror("\033[31mError:\033[0m read failed");
-//         return false;
-//     }
-
-//     *arguments = myStrTok(*cmd, bytesRead, delimiters);
-//     *nArguments = getNTokens(*cmd, bytesRead, delimiters) - 1;
-
-//     printf("nArguments: %d\n", *nArguments);
-//     printf("arguments 0 %s\n", *arguments[0]);
-//     printf("arguments 1 %s\n", *arguments[1]);
-//     return true;
-// }
 
 bool processCommand(char **arguments, int nArguments, int *recursiveCount, tListF* fileList, tListC* commandList, tListM* memoryList) {
     if(*recursiveCount > 10){

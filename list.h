@@ -51,6 +51,19 @@ typedef struct {
     };
 } tItemM;
 
+typedef enum {
+    FINISHED, STOPPED, SIGNALED, ACTIVE
+} statusType;
+
+typedef struct {
+    pid_t pid;
+    time_t time;
+    statusType status;
+    char *command;
+    int priority;       // [-20, 19]
+
+} tItemP;
+
 typedef struct tNode *tPos;
 
 struct tNode {
@@ -62,6 +75,7 @@ typedef tPos tList;
 typedef tList tListF;
 typedef tList tListC;
 typedef tList tListM;
+typedef tList tListP;
 
 bool isEmpty(tList L); // Función que devuelve si una lista está vacía o no.
 

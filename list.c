@@ -98,7 +98,6 @@ void allocateItemF(tItem *qElement, tItem item) {
 
     if ((newItemF = (tItemF*)malloc(sizeof(tItemF))) == NULL) {
         perror("Error allocating memory for newItemF");
-        free(newItemF);
         exit(EXIT_FAILURE);
     }
     
@@ -423,3 +422,64 @@ tPos findElementM(void* index, tListF L, allocationType type) {
     return p;
 }
 
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PROCCESS_LIST~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+void allocateItemP(tItem *qElement, tItem item) {
+    tItemP *newItemP;
+
+    if ((newItemP = (tItemP*)malloc(sizeof(tItemP))) == NULL) {
+        perror("Error allocating memory for newItemP");
+        exit(EXIT_FAILURE); 
+    }
+    
+
+    // Asigna memoria para fileName
+    if ((newItemP->command = (char*)malloc(strlen(((tItemP*)item)->command) + 1)) == NULL) {
+        perror("Memory allocation for fileName failed\n");
+        free(newItemP);
+        exit(EXIT_FAILURE);
+    }
+
+    newItemP->pid = ((tItemP*)item)->pid;
+    newItemP->time = ((tItemP*)item)->time;
+    newItemP->status = ((tItemP*)item)->status;
+    strcpy(newItemP->command, ((tItemP*)item)->command);
+    newItemP->priority = ((tItemP*)item)->priority;
+
+
+    *qElement = (tItem)newItemP;
+}
+
+void freeItemF(void* element) {
+    tItemP *item = (tItemP *)element;
+
+    if (item != NULL) {
+        free(item->command);
+        item->command = NULL;
+        free(item);
+    }
+}
+
+tPos findElementP(int pid, tListP L) {
+    tPos p;
+
+    for (p = L; (p != NULL) && (((tItemP *)(p->data))->pid != pid); p = p->next);
+
+    return p;
+}
+
+
+void displayListP(tListP L) {
+    tPos p;
+    tItemP *pElement;
+
+    for (p = L; p != NULL; p = next(p)) {
+        if (p->data != NULL) {
+            pElement = ((tItemP *)(p->data));
+            printf("descriptor: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
+        }
+    }
+}
