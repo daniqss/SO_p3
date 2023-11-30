@@ -453,7 +453,7 @@ void allocateItemP(tItem *qElement, tItem item) {
     *qElement = (tItem)newItemP;
 }
 
-void freeItemF(void* element) {
+void freeItemP(void* element) {
     tItemP *item = (tItemP *)element;
 
     if (item != NULL) {
@@ -479,7 +479,11 @@ void displayListP(tListP L) {
     for (p = L; p != NULL; p = next(p)) {
         if (p->data != NULL) {
             pElement = ((tItemP *)(p->data));
-            printf("descriptor: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
+            // printf("descriptor: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
+            printf("PID: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
+            printf("Status: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->status, ctime(&pElement->time));
+            printf("Priority: \033[33m%d\033[0m\n", pElement->priority);
+
         }
     }
 }
