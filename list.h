@@ -79,6 +79,8 @@ typedef tList tListP;
 
 bool isEmpty(tList L); // Función que devuelve si una lista está vacía o no.
 
+tPos first(tList L); // Función que accede a la primera posición de una lista.
+
 void createList(tList *L); // Función que crea una lista vacía.
 
 tPos next(tPos pos); // Función que accede a la siguiente posición a una dada en una lista.
@@ -114,5 +116,10 @@ void allocateItemM(tItem *qElement, tItem item);
 void freeItemM(void *p);
 void displayListM(tListM L, allocationType type);
 tPos findElementM(void* index, tListF L, allocationType type);
+
+void allocateItemP(tItem *qElement, tItem item);
+void freeItemP(void* p);
+void displayListP(tListP L);
+tPos findElementP(pid_t pid, tListP L);
 
 #endif
