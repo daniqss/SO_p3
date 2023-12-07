@@ -181,3 +181,25 @@ void cmd_recurse(char *arguments[MAX_ARGUMENTS], int nArguments);
 /*
  * LLama a una funcion recursiva las veces que le pasemos como parámetro
  */
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PROCCESS_COMMANDS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+void cmd_uid (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_showvar (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_changevar (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_subsvar (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_showenv (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_jobs (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_jobs (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_deljobs (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void cmd_job (char *arguments[MAX_ARGUMENTS], int nArguments);

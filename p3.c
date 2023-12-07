@@ -35,7 +35,7 @@ void freeMemory(char *cmd, char **arguments);
 
 
 
-int main() {
+int main(int argc, char *argv[], char *envp[]) {
     char cmd[MAX_BUFFER];
     char *arguments[MAX_ARGUMENTS];    // PASAR TODO A ESTATICO
     int nArguments;
@@ -51,7 +51,6 @@ int main() {
 
     if (!insertStdFiles(&fileList)) 
         exit(EXIT_FAILURE);
-
 
     do {
         printPrompt();
@@ -194,6 +193,8 @@ bool processCommand(char **arguments, int nArguments, int *recursiveCount, tList
         cmd_mem(arguments,nArguments, memoryList);
     else if (strcmp(arguments[0],"recurse")==0)
         cmd_recurse(arguments, nArguments);
+    else if (strcmp(arguments[0],"exec")==0)
+        cmd_exec(arguments, nArguments);
 
     else if ((strcmp(arguments[0], "quit") == 0) || (strcmp(arguments[0], "bye") == 0) || (strcmp(arguments[0], "exit") == 0))
         return false;

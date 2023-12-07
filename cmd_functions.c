@@ -37,6 +37,9 @@ void fillMemory(void *p, size_t cont, unsigned char byte);
 void fillMemory (void *p, size_t cont, unsigned char byte);
 void recursive (int n);
 
+bool isEnvVar(char *argument);
+char* getCommandPath(char *command);
+
 // Variables globales
 int variableGlobal1 = 10;
 int variableGlobal2 = 20;
@@ -1271,4 +1274,67 @@ void recursive(int n) {
 
     if (n > 0)
         recursive(n - 1);
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PROCCESS_COMMANDS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+
+void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments) {
+    char *argv[MAX_ARGUMENTS];      // Comando y argumentos a ejecutar
+    char *envp[MAX_ARGUMENTS];      // Entorno
+    int argc;     // Número de argumentos del comando a ejecutar
+    int envc;     // Número de variables de entorno
+    char *commandPath; // Path del comando a ejecutar
+
+    if (nArguments < 2) {
+        perror("Imposible ejecutar\n");
+        return;
+    }
+
+
+    while (isEnvVar(arguments[envc + 1])) {
+        envp[envc] = arguments[envc + 1];
+        envc++;
+    }
+    envc++;
+    envp[envc] = NULL;
+    // Consigue las variables de entorno
+
+    for (argc = 0; argc < nArguments - envc; argc++) {
+        argv[argc] = arguments[argc + envc];
+    }
+    argc++;
+    argv[argc] = NULL;
+    // Copiamos los argumentos
+     
+    commandPath = getCommandPath(arguments[1]);
+    if (execve(commandPath, argv, envp) == -1) {}
+        perror("execvpe");
+    free(commandPath);
+    // Ejecutamos el comando con los argumentos pasados
+}
+
+bool isEnvVar(char *argument) {
+    return strchr(argument, '=') != NULL;
+}
+
+char* getCommandPath(char *command) {
+    char *path = getenv("PATH");
+    char *pathCopy = strdup(path);
+    char *pathToken = strtok(pathCopy, ":");
+    char *commandPath = malloc(strlen(path) + strlen(command) + 2);
+
+    while (pathToken != NULL) {
+        snprintf(commandPath, MAX_PATH, "%s/%s", pathToken, command);
+        if (access(commandPath, X_OK) == 0) {
+            free(pathCopy);
+            return commandPath;
+        }
+        pathToken = strtok(NULL, ":");
+    }
+    free(pathCopy);
+    free(commandPath);
+    return NULL;
 }
