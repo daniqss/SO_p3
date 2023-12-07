@@ -64,7 +64,7 @@ void cmd_hist(char *arguments[MAX_ARGUMENTS], int nArguments, tListC *commandLis
  *  -c Borra el historial en vez de mostrarlo
  *  -N (siendo N un número natural) muestra los N primeros comandos.
  */
-void cmd_command(char *arguments[MAX_ARGUMENTS], int nArguments, int *recursiveCount, tListC *commandList, tListF *fileList, tListM *memoryList);
+void cmd_command(char *arguments[MAX_ARGUMENTS], int nArguments, int *recursiveCount, tListC *commandList, tListF *fileList, tListM *memoryList, tListP *processList);
 /*
  * Ejecuta el comando número N (siendo N un número natural)
  *
@@ -118,11 +118,6 @@ void cmd_deltree(char *arguments[MAX_ARGUMENTS], int nArguments);
 void cmd_list (char *arguments[MAX_ARGUMENTS], int nArguments);
 /*
  * Muestra los ficheros del directorio indicado
- */
-
-void cmd_clear ();
-/*
- * Limpia la pantalla
  */
 
 void cmd_stat (char *arguments[MAX_ARGUMENTS], int nArguments);
@@ -182,7 +177,7 @@ void cmd_recurse(char *arguments[MAX_ARGUMENTS], int nArguments);
  * LLama a una funcion recursiva las veces que le pasemos como parámetro
  */
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PROCCESS_COMMANDS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~process_COMMANDS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void cmd_uid (char *arguments[MAX_ARGUMENTS], int nArguments);
 
@@ -194,7 +189,7 @@ void cmd_subsvar (char *arguments[MAX_ARGUMENTS], int nArguments);
 
 void cmd_showenv (char *arguments[MAX_ARGUMENTS], int nArguments);
 
-void cmd_jobs (char *arguments[MAX_ARGUMENTS], int nArguments);
+void cmd_fork();
 
 void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments);
 

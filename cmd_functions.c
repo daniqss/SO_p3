@@ -556,10 +556,6 @@ void cmd_stat (char *arguments[MAX_ARGUMENTS], int nArguments){
     }
 }
 
-void cmd_clear () {
-    printf("\033[H\033[J");
-}
-
 void cmd_help(char *arguments[MAX_ARGUMENTS], int nArguments) {
     char *comando = arguments[1];
     switch (nArguments) {
@@ -1277,8 +1273,23 @@ void recursive(int n) {
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PROCCESS_COMMANDS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~process_COMMANDS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+
+void cmd_fork (tList *processList) {
+	pid_t pid;
+    tItem p;
+	
+	if ((pid = fork()) == 0){
+        for(p = first(*processList); p != NULL; p = next(p)) {
+            removeElement(p, processList, freeItemP);
+        }
+		printf ("Ejecutando proceso %d\n", getpid());
+	}
+	else if (pid!=-1)
+		waitpid (pid,NULL,0);
+}
 
 
 void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments) {
@@ -1346,38 +1357,31 @@ void externalProgram(char **arguments, int nArguments) {
     char *commandPath;
     pid_t pid;
 
-    printf("1\n");
     commandPath = getCommandPath(arguments[0]);
     if (commandPath == NULL) {
         printf("\033[31mError:\033[0m Command '%s' not found\n", arguments[0]);
         return;
     }
-    printf("2\n");
-    pid = fork();
-    if (pid == -1) {
-        perror("Error al hacer fork");
-        exit(EXIT_FAILURE);
-    }
 
-    if (pid == 0) {
-        // Código del proceso hijo
-        printf("Soy el proceso hijo (PID: %d)\n", getpid());
 
-        // Reemplaza el código del proceso hijo con un nuevo programa
-        if (execv(commandPath, arguments) == -1)
+    if ((pid = fork()) == 0) {
+        // Proceso hijo
+        if (execv(commandPath, arguments) == -1) {
             perror("execv");
         free(commandPath);
         exit(EXIT_FAILURE);
-    } else {
-        // Código del proceso padre
-        printf("Soy el proceso padre (PID: %d)\n", getpid());
-
-        // Espera a que el proceso hijo termine
-        wait(NULL);
-
-        printf("Proceso hijo terminado\n");
+        }
+	}
+	else if (pid == -1) {
+        // Error al crear el proceso hijo
+        perror("fork");
+        exit(EXIT_FAILURE);
     }
-
+    else {
+        // Proceso padre
+		waitpid (pid, NULL, 0);
+    }
+    free(commandPath);
 
 }
 

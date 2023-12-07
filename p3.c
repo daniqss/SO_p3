@@ -20,7 +20,7 @@ int chopCmd(char cmd[MAX_BUFFER], char *tokens[]);
 void printPrompt();
 // Imprime Prompt (Salida por defecto)
 
-bool processCommand(char **arguments, int nArguments, int * recursiveCount, tListF *fileList, tListC *comandList, tListM *memoryList);
+bool processCommand(char **arguments, int nArguments, int * recursiveCount, tListF *fileList, tListC *comandList, tListM *memoryList, tListP *processList);
 // Identifica a que comando se refiere la entrada y lo llama.
 
 void freeMemory(char *cmd, char **arguments);
@@ -49,10 +49,12 @@ int main(int argc, char *argv[], char *envp[]) {
     tListF fileList;
     tListC commandList;
     tListM memoryList;
+    tListP processList;
 
     createList(&commandList);
     createList(&fileList);
     createList(&memoryList);
+    createList(&processList);
 
     if (!insertStdFiles(&fileList)) 
         exit(EXIT_FAILURE);
@@ -61,13 +63,14 @@ int main(int argc, char *argv[], char *envp[]) {
         printPrompt();
         quit = readInputs(cmd, arguments, &nArguments, &commandList);
         if (quit)
-            quit = processCommand(arguments, nArguments, &recursiveCount , &fileList, &commandList, &memoryList);
+            quit = processCommand(arguments, nArguments, &recursiveCount , &fileList, &commandList, &memoryList, &processList);
         //freeMemory(cmd, arguments);
     } while (quit);
 
     freeList(&commandList, freeItemC);
     freeList(&fileList, freeItemF);
     freeList(&memoryList, freeItemM);
+    freeList(&processList, freeItemP);
     return EXIT_SUCCESS;
 }
 
@@ -135,7 +138,7 @@ int chopCmd(char cmd[MAX_BUFFER], char *tokens[]) {
     return i;
 }
 
-bool processCommand(char **arguments, int nArguments, int *recursiveCount, tListF* fileList, tListC* commandList, tListM* memoryList) {
+bool processCommand(char **arguments, int nArguments, int *recursiveCount, tListF* fileList, tListC* commandList, tListM* memoryList, tListP* processList) {
     if(*recursiveCount > 10){
         printf("Demasiada recursión en hist \n");
         (*recursiveCount) = 0;
@@ -165,15 +168,13 @@ bool processCommand(char **arguments, int nArguments, int *recursiveCount, tList
     else if (strcmp(arguments[0],"hist")==0)
         cmd_hist(arguments, nArguments, commandList);
     else if (strcmp(arguments[0],"command")==0)
-        cmd_command(arguments, nArguments, recursiveCount ,commandList, fileList, memoryList);
+        cmd_command(arguments, nArguments, recursiveCount ,commandList, fileList, memoryList, processList);
     else if (strcmp(arguments[0],"create")==0)
         cmd_create(arguments, nArguments);
     else if (strcmp(arguments[0],"delete")==0)
         cmd_delete(arguments, nArguments);
     else if (strcmp(arguments[0],"deltree")==0)
         cmd_deltree(arguments, nArguments);
-    else if (strcmp(arguments[0],"clear")==0)
-        cmd_clear();
     else if (strcmp(arguments[0],"stat")==0)
         cmd_stat(arguments, nArguments);
     else if (strcmp(arguments[0],"list")==0)
@@ -198,6 +199,8 @@ bool processCommand(char **arguments, int nArguments, int *recursiveCount, tList
         cmd_mem(arguments,nArguments, memoryList);
     else if (strcmp(arguments[0],"recurse")==0)
         cmd_recurse(arguments, nArguments);
+    else if (strcmp(arguments[0],"fork")==0)
+        cmd_fork(processList);
     else if (strcmp(arguments[0],"exec")==0)
         cmd_exec(arguments, nArguments);
 
@@ -227,7 +230,7 @@ void freeMemory(char *cmd, char **arguments) {
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 
-void cmd_command(char *arguments[MAX_ARGUMENTS], int nArguments, int *recursiveCount, tListC *commandList, tListF *fileList, tListM *memoryList){
+void cmd_command(char *arguments[MAX_ARGUMENTS], int nArguments, int *recursiveCount, tListC *commandList, tListF *fileList, tListM *memoryList, tListP *processList) {
     int numero, nArgumentsHist;
     tItemC command = NULL;
     char *argumentsHist[MAX_ARGUMENTS];
@@ -246,7 +249,7 @@ void cmd_command(char *arguments[MAX_ARGUMENTS], int nArguments, int *recursiveC
                     printf("Ejecutando hist (%d): %s \n",numero,command);
                     nArgumentsHist = chopCmd(command, argumentsHist); //Conseguimos el número de argumentos
                     (*recursiveCount)++; //Aumentamos el contador de recursividad
-                    processCommand(argumentsHist, nArgumentsHist, recursiveCount, fileList, commandList, memoryList);
+                    processCommand(argumentsHist, nArgumentsHist, recursiveCount, fileList, commandList, memoryList, processList);
                 }
                 free(command);
             }
