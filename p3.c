@@ -26,6 +26,11 @@ bool processCommand(char **arguments, int nArguments, int * recursiveCount, tLis
 void freeMemory(char *cmd, char **arguments);
 // Libera la memoria de los argumentos y el comando
 
+void externalProgram(char **arguments, int nArguments);
+// Ejecuta un programa externo
+
+void externalProgramInBackground(char **arguments, int nArguments);
+// Ejecuta un programa externo en segundo plano
 
 
 
@@ -199,7 +204,8 @@ bool processCommand(char **arguments, int nArguments, int *recursiveCount, tList
     else if ((strcmp(arguments[0], "quit") == 0) || (strcmp(arguments[0], "bye") == 0) || (strcmp(arguments[0], "exit") == 0))
         return false;
     else
-        printf("\033[31mNo ejecutado: \033[0mNo such file or directory\n");
+        if (arguments[nArguments - 1][0] != '&') externalProgram(arguments, nArguments);
+        else externalProgramInBackground(arguments, nArguments);
     return true;
 }
 

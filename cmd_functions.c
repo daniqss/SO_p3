@@ -38,7 +38,7 @@ void fillMemory (void *p, size_t cont, unsigned char byte);
 void recursive (int n);
 
 bool isEnvVar(char *argument);
-char* getCommandPath(char *command);
+char* getCommandPath(const char *command);
 
 // Variables globales
 int variableGlobal1 = 10;
@@ -1282,10 +1282,10 @@ void recursive(int n) {
 
 
 void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments) {
-    char *argv[MAX_ARGUMENTS];      // Comando y argumentos a ejecutar
-    char *envp[MAX_ARGUMENTS];      // Entorno
-    int argc;     // Número de argumentos del comando a ejecutar
-    int envc;     // Número de variables de entorno
+    char *argv[MAX_ARGUMENTS] = {NULL};      // Comando y argumentos a ejecutar
+    char *envp[MAX_ARGUMENTS] = {NULL};      // Variables de entorno
+    int argc = 0;     // Número de argumentos del comando a ejecutar
+    int envc = 0;     // Número de variables de entorno
     char *commandPath; // Path del comando a ejecutar
 
     if (nArguments < 2) {
@@ -1299,7 +1299,8 @@ void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments) {
         envc++;
     }
     envc++;
-    envp[envc] = NULL;
+    if (envc == 1) *envp = NULL;
+    else envp[envc] = NULL;
     // Consigue las variables de entorno
 
     for (argc = 0; argc < nArguments - envc; argc++) {
@@ -1310,8 +1311,8 @@ void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments) {
     // Copiamos los argumentos
      
     commandPath = getCommandPath(arguments[1]);
-    if (execve(commandPath, argv, envp) == -1) {}
-        perror("execvpe");
+    if (execve(commandPath, argv, envp) == -1)
+        perror("execve");
     free(commandPath);
     // Ejecutamos el comando con los argumentos pasados
 }
@@ -1320,7 +1321,7 @@ bool isEnvVar(char *argument) {
     return strchr(argument, '=') != NULL;
 }
 
-char* getCommandPath(char *command) {
+char* getCommandPath(const char *command) {
     char *path = getenv("PATH");
     char *pathCopy = strdup(path);
     char *pathToken = strtok(pathCopy, ":");
@@ -1337,4 +1338,49 @@ char* getCommandPath(char *command) {
     free(pathCopy);
     free(commandPath);
     return NULL;
+}
+
+
+
+void externalProgram(char **arguments, int nArguments) {
+    char *commandPath;
+    pid_t pid;
+
+    printf("1\n");
+    commandPath = getCommandPath(arguments[0]);
+    if (commandPath == NULL) {
+        printf("\033[31mError:\033[0m Command '%s' not found\n", arguments[0]);
+        return;
+    }
+    printf("2\n");
+    pid = fork();
+    if (pid == -1) {
+        perror("Error al hacer fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0) {
+        // Código del proceso hijo
+        printf("Soy el proceso hijo (PID: %d)\n", getpid());
+
+        // Reemplaza el código del proceso hijo con un nuevo programa
+        if (execv(commandPath, arguments) == -1)
+            perror("execv");
+        free(commandPath);
+        exit(EXIT_FAILURE);
+    } else {
+        // Código del proceso padre
+        printf("Soy el proceso padre (PID: %d)\n", getpid());
+
+        // Espera a que el proceso hijo termine
+        wait(NULL);
+
+        printf("Proceso hijo terminado\n");
+    }
+
+
+}
+
+void externalProgramInBackground(char **arguments, int nArguments) {
+
 }

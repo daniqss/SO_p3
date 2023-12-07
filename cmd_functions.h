@@ -203,3 +203,7 @@ void cmd_jobs (char *arguments[MAX_ARGUMENTS], int nArguments);
 void cmd_deljobs (char *arguments[MAX_ARGUMENTS], int nArguments);
 
 void cmd_job (char *arguments[MAX_ARGUMENTS], int nArguments);
+
+void externalProgram(char **arguments, int nArguments);
+
+void externalProgramInBackground(char **arguments, int nArguments);
