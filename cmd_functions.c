@@ -39,6 +39,8 @@ void recursive (int n);
 
 bool isEnvVar(char *argument);
 char* getCommandPath(const char *command);
+void executeInForeground(char* commandPath, char **arguments);
+void executeInBackground(char* commandPath, char **arguments, tListP *processList);
 
 // Variables globales
 int variableGlobal1 = 10;
@@ -1315,7 +1317,8 @@ void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments) {
     // Consigue las variables de entorno
 
     for (argc = 0; argc < nArguments - envc; argc++) {
-        argv[argc] = arguments[argc + envc];
+        if (strcmp(arguments[argc + envc], "&") != 0)
+            argv[argc] = arguments[argc + envc];
     }
     argc++;
     argv[argc] = NULL;
@@ -1335,27 +1338,38 @@ bool isEnvVar(char *argument) {
 char* getCommandPath(const char *command) {
     char *path = getenv("PATH");
     char *pathCopy = strdup(path);
+    // Copiamos el path para no modificar el original
     char *pathToken = strtok(pathCopy, ":");
     char *commandPath = malloc(strlen(path) + strlen(command) + 2);
+    // Reservamos memoria para el path del comando (path + '/' + command + '\0')
 
     while (pathToken != NULL) {
         snprintf(commandPath, MAX_PATH, "%s/%s", pathToken, command);
         if (access(commandPath, X_OK) == 0) {
             free(pathCopy);
             return commandPath;
+            // Si el comando es ejecutable devolvemos el path
         }
         pathToken = strtok(NULL, ":");
     }
+
     free(pathCopy);
     free(commandPath);
     return NULL;
+    // Si no encontramos el comando devolvemos NULL
+}
+
+void cmd_jobs(tListP *processList) {
+    printf("PID\tTIME\tSTATUS\tCOMMAND\n");
+    displayListP(*processList);
 }
 
 
 
-void externalProgram(char **arguments, int nArguments) {
+void externalProgram(char **arguments, int nArguments, tList *processList) {
     char *commandPath;
-    pid_t pid;
+    char *argv[MAX_ARGUMENTS] = {NULL};
+    int argc;
 
     commandPath = getCommandPath(arguments[0]);
     if (commandPath == NULL) {
@@ -1363,14 +1377,31 @@ void externalProgram(char **arguments, int nArguments) {
         return;
     }
 
+    for (argc = 0; argc < nArguments; argc++) {
+        if (strcmp(arguments[argc], "&") != 0)
+            argv[argc] = arguments[argc];
+    }
+    argc++;
+    argv[argc] = NULL;
+
+    if (arguments[nArguments - 1][0] != '&')
+        executeInForeground(commandPath, argv);
+    else 
+        executeInBackground(commandPath, argv, processList);
+
+}
+
+void executeInForeground(char* commandPath, char **argv) {
+    pid_t pid;
 
     if ((pid = fork()) == 0) {
         // Proceso hijo
-        if (execv(commandPath, arguments) == -1) {
+        if (execv(commandPath, argv) == -1) {
             perror("execv");
-        free(commandPath);
-        exit(EXIT_FAILURE);
+            free(commandPath);
+            exit(EXIT_FAILURE);
         }
+        free(commandPath);
 	}
 	else if (pid == -1) {
         // Error al crear el proceso hijo
@@ -1381,10 +1412,32 @@ void externalProgram(char **arguments, int nArguments) {
         // Proceso padre
 		waitpid (pid, NULL, 0);
     }
-    free(commandPath);
-
 }
 
-void externalProgramInBackground(char **arguments, int nArguments) {
+void executeInBackground(char* commandPath, char **argv, tListP *processList)  {
+    pid_t pid;
+    tItemP newItem;
 
+    if ((pid = fork()) == -1) {
+        // Error al crear el proceso hijo
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) {
+        // Proceso hijo
+        if (execv(commandPath, argv) == -1) {
+            perror("execv");
+            free(commandPath);
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        // Proceso padre
+        newItem.pid = pid;
+        newItem.time = time(NULL);
+        newItem.status = ACTIVE;
+        newItem.command = argv[0];
+
+        insertElement(&newItem, processList, allocateItemP);
+        printf("Ejecutando proceso %d en segundo plano\n", pid);
+        displayListP(*processList);
+    }
 }

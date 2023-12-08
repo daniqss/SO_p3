@@ -26,12 +26,6 @@ bool processCommand(char **arguments, int nArguments, int * recursiveCount, tLis
 void freeMemory(char *cmd, char **arguments);
 // Libera la memoria de los argumentos y el comando
 
-void externalProgram(char **arguments, int nArguments);
-// Ejecuta un programa externo
-
-void externalProgramInBackground(char **arguments, int nArguments);
-// Ejecuta un programa externo en segundo plano
-
 
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,7 +58,7 @@ int main(int argc, char *argv[], char *envp[]) {
         quit = readInputs(cmd, arguments, &nArguments, &commandList);
         if (quit)
             quit = processCommand(arguments, nArguments, &recursiveCount , &fileList, &commandList, &memoryList, &processList);
-        //freeMemory(cmd, arguments);
+        // freeMemory(cmd, arguments);
     } while (quit);
 
     freeList(&commandList, freeItemC);
@@ -203,12 +197,13 @@ bool processCommand(char **arguments, int nArguments, int *recursiveCount, tList
         cmd_fork(processList);
     else if (strcmp(arguments[0],"exec")==0)
         cmd_exec(arguments, nArguments);
+    else if (strcmp(arguments[0],"jobs")==0)
+        cmd_jobs(processList);
 
     else if ((strcmp(arguments[0], "quit") == 0) || (strcmp(arguments[0], "bye") == 0) || (strcmp(arguments[0], "exit") == 0))
         return false;
     else
-        if (arguments[nArguments - 1][0] != '&') externalProgram(arguments, nArguments);
-        else externalProgramInBackground(arguments, nArguments);
+        externalProgram(arguments, nArguments, processList);
     return true;
 }
 

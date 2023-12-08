@@ -447,8 +447,6 @@ void allocateItemP(tItem *qElement, tItem item) {
     newItemP->time = ((tItemP*)item)->time;
     newItemP->status = ((tItemP*)item)->status;
     strcpy(newItemP->command, ((tItemP*)item)->command);
-    newItemP->priority = ((tItemP*)item)->priority;
-
 
     *qElement = (tItem)newItemP;
 }
@@ -475,14 +473,17 @@ tPos findElementP(int pid, tListP L) {
 void displayListP(tListP L) {
     tPos p;
     tItemP *pElement;
+    int wstatus;
 
     for (p = L; p != NULL; p = next(p)) {
         if (p->data != NULL) {
             pElement = ((tItemP *)(p->data));
-            // printf("descriptor: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
-            printf("PID: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
-            printf("Status: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->status, ctime(&pElement->time));
-            printf("Priority: \033[33m%d\033[0m\n", pElement->priority);
+            if (pElement->pid == waitpid(pElement->pid, &wstatus, WNOHANG)) {
+                pElement->status = wstatus;
+                printf("PID: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
+                printf("Status: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->status, ctime(&pElement->time));
+                printf("Priority: \033[33m%d\033[0m\n", getpriority(PRIO_PROCESS, pElement->pid));
+            }
 
         }
     }

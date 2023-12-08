@@ -15,7 +15,8 @@ AUTORES: Santiago Garea Cidre (s.garea@udc.es)
 #include <sys/shm.h>
 #include <time.h>
 #include <sys/mman.h>
-
+#include <sys/wait.h>
+#include <sys/resource.h>
 
 #define MAX_ELEMENTS 4096
 
@@ -60,8 +61,6 @@ typedef struct {
     time_t time;
     statusType status;
     char *command;
-    int priority;       // [-20, 19]
-
 } tItemP;
 
 typedef struct tNode *tPos;

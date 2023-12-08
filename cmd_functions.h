@@ -19,7 +19,6 @@ AUTORES: Santiago Garea Cidre (s.garea@udc.es)
 #include <grp.h>
 #include <stdint.h>
 #include <openssl/sha.h>
-#include <sys/wait.h>
 
 
 #include "list.h"
@@ -193,12 +192,10 @@ void cmd_fork();
 
 void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments);
 
-void cmd_jobs (char *arguments[MAX_ARGUMENTS], int nArguments);
+void cmd_jobs(tListP *processList);
 
 void cmd_deljobs (char *arguments[MAX_ARGUMENTS], int nArguments);
 
 void cmd_job (char *arguments[MAX_ARGUMENTS], int nArguments);
 
-void externalProgram(char **arguments, int nArguments);
-
-void externalProgramInBackground(char **arguments, int nArguments);
+void externalProgram(char **arguments, int nArguments, tList *processList);
