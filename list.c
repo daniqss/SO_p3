@@ -444,7 +444,8 @@ void allocateItemP(tItem *qElement, tItem item) {
     }
 
     newItemP->pid = ((tItemP*)item)->pid;
-    newItemP->time = ((tItemP*)item)->time;
+    newItemP->startTime = ((tItemP*)item)->startTime;
+    newItemP->endTime = ((tItemP*)item)->endTime;
     newItemP->status = ((tItemP*)item)->status;
     strcpy(newItemP->command, ((tItemP*)item)->command);
 
@@ -473,18 +474,76 @@ tPos findElementP(int pid, tListP L) {
 void displayListP(tListP L) {
     tPos p;
     tItemP *pElement;
-    int wstatus;
-
+    printf("displayListP\n");
+    if (isEmpty(L)) return;
     for (p = L; p != NULL; p = next(p)) {
         if (p->data != NULL) {
             pElement = ((tItemP *)(p->data));
-            if (pElement->pid == waitpid(pElement->pid, &wstatus, WNOHANG)) {
-                pElement->status = wstatus;
-                printf("PID: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
-                printf("Status: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->status, ctime(&pElement->time));
-                printf("Priority: \033[33m%d\033[0m\n", getpriority(PRIO_PROCESS, pElement->pid));
+
+            *pElement = updateItemP(*pElement, WNOHANG);
+
+            printf("PID: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
+            printf("Status: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->status, ctime(&pElement->startTime));
+            printf("Priority: \033[33m%d\033[0m\n", getpriority(PRIO_PROCESS, pElement->pid));
+
+            switch (pElement->status) {
+                case FINISHED:
+                    printf("Status -> \033[34m%s\033[0m\n", "FINISHED");
+                    break;
+                case STOPPED:
+                    printf("Status: -> \033[34m%s\033[0m\n", "STOPPED");
+                    break;
+                case SIGNALED:
+                    printf("Status: -> \033[34m%s\033[0m\n", "SIGNALED");
+                    break;
+                case ACTIVE:
+                    printf("Status: -> \033[34m%s\033[0m\n", "ACTIVE");
+                    break;
+                default:
+                    break;
             }
 
+        }
+    }
+}
+
+tItemP updateItemP (tItemP item, int options) {
+    int wstatus;
+	if(options != 0){
+		options = WNOHANG | WUNTRACED | WCONTINUED; 
+	}
+
+	if(waitpid(item.pid, &wstatus, options) == item.pid){
+		if(WIFEXITED(wstatus)){
+			item.status = FINISHED;
+			item.endTime = WEXITSTATUS(wstatus);
+		} else if (WIFCONTINUED(wstatus)){
+			item.status = ACTIVE;
+		} else if (WIFSTOPPED(wstatus)){
+			item.status = STOPPED;
+			item.endTime = WTERMSIG(wstatus);
+		} else if (WIFSIGNALED(wstatus)){
+			item.status = SIGNALED;
+			item.endTime = WTERMSIG(wstatus);
+		}
+	}
+	return item;
+}
+
+void removeJobs(tListP *processList, statusType status) {
+    tPos p;
+    tItemP *pElement;
+    printf("removeJobs\n");
+    for (p = *processList; p != NULL; p = next(p)) {
+        printf("p %p\n", p);
+        if (p->data != NULL) {
+            printf("p->data %p\n", p->data);
+            pElement = ((tItemP *)(p->data));
+
+            if (pElement->status == status) {
+                printf("pElement->status %p\n", &(pElement->status));
+                removeElement(p, processList, freeItemP);
+            }
         }
     }
 }

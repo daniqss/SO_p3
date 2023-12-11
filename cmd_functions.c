@@ -1364,7 +1364,23 @@ void cmd_jobs(tListP *processList) {
     displayListP(*processList);
 }
 
+void cmd_deljobs(char **arguments, int nArguments, tListP *processList) {
 
+    if (nArguments != 2) {
+        displayListP(*processList);
+        return;
+    }
+    
+    if (strcmp(arguments[1], "-term") == 0) {
+        removeJobs(processList, FINISHED);
+    }
+    else if (strcmp(arguments[1], "-sig") == 0) {
+        removeJobs(processList, SIGNALED);   
+    }
+    else {
+        displayListP(*processList);
+    }
+}
 
 void externalProgram(char **arguments, int nArguments, tList *processList) {
     char *commandPath;
@@ -1432,7 +1448,8 @@ void executeInBackground(char* commandPath, char **argv, tListP *processList)  {
     } else {
         // Proceso padre
         newItem.pid = pid;
-        newItem.time = time(NULL);
+        newItem.startTime = time(NULL);
+        newItem.endTime = 0;
         newItem.status = ACTIVE;
         newItem.command = argv[0];
 

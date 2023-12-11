@@ -58,7 +58,8 @@ typedef enum {
 
 typedef struct {
     pid_t pid;
-    time_t time;
+    time_t startTime;
+    time_t endTime;
     statusType status;
     char *command;
 } tItemP;
@@ -118,7 +119,9 @@ tPos findElementM(void* index, tListF L, allocationType type);
 
 void allocateItemP(tItem *qElement, tItem item);
 void freeItemP(void* p);
-void displayListP(tListP L);
 tPos findElementP(pid_t pid, tListP L);
+void displayListP(tListP L);
+tItemP updateItemP (tItemP item, int options);
+void removeJobs(tListP *processList, statusType status);
 
 #endif

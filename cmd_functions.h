@@ -194,7 +194,7 @@ void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments);
 
 void cmd_jobs(tListP *processList);
 
-void cmd_deljobs (char *arguments[MAX_ARGUMENTS], int nArguments);
+void cmd_deljobs (char **arguments, int nArguments, tListP *processList);
 
 void cmd_job (char *arguments[MAX_ARGUMENTS], int nArguments);
 
