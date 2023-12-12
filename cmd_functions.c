@@ -1277,6 +1277,154 @@ void recursive(int n) {
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~process_COMMANDS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+void printUidInfo(uid_t uid, const char *label) {
+    struct passwd *pwd = getpwuid(uid);
+    if (pwd == NULL) {
+        perror("getpwuid");
+        return;
+    }
+
+    printf("%s: %d, (%s)\n", label, uid, pwd->pw_name);
+}
+
+bool setUid(uid_t uid) {
+    if (setuid(uid) == 0) {
+        return true;
+    } else {
+        perror("setuid");
+        return false;
+    }
+}
+
+bool setUidByName(const char *login) {
+    struct passwd *pwd = getpwnam(login);
+    if (pwd == NULL) {
+        perror("getpwnam");
+        return false;
+    }
+
+    return setUid(pwd->pw_uid);
+}
+
+void cmd_uid(char *arguments[MAX_ARGUMENTS], int nArguments) {
+    uid_t currentUid = getuid();
+    uid_t effectiveUid = geteuid();
+
+    if (nArguments > 1) {
+        if (strcmp(arguments[1], "-get") == 0) {
+            printUidInfo(currentUid, "Credencial real");
+            printUidInfo(effectiveUid, "Credencial efectiva");
+        } else if (strcmp(arguments[1], "-set") == 0) {
+            if (nArguments > 2) {
+                if (strcmp(arguments[2], "-l") == 0 && nArguments > 3) {
+                    // Establecer credencial por login
+                    if (setUidByName(arguments[3])) {
+                        printf("Credencial establecida por login: %s\n", arguments[3]);
+                    } else {
+                        printf("Imposible cambiar credencial: %s\n", strerror(errno));
+                    }
+                } else {
+                    int newUid;
+                    if (esEnteroPositivo(arguments[2], &newUid)) {
+                        // Establecer credencial por UID numérico
+                        if (setUid(newUid)) {
+                            printUidInfo(newUid, "Credencial establecida");
+                        } else {
+                            printf("Imposible cambiar credencial: %s\n", strerror(errno));
+                        }
+                    } else {
+                        printf("ID no válido\n");
+                    }
+                }
+            } else {
+                printf("Falta el ID para establecer la credencial\n");
+            }
+        } else {
+            printf("Comando no reconocido. Uso: uid [-get|-set] [-l] [id]\n");
+        }
+    } else {
+        printUidInfo(currentUid, "Credencial real");
+        printUidInfo(effectiveUid, "Credencial efectiva");
+    }
+}
+
+void showVar(const char *var) {
+    extern char **environ;
+
+    // Obtener la dirección base
+    uintptr_t base_address = (uintptr_t)__builtin_frame_address(0);
+
+    // Obtener la dirección original en arg3
+    char *arg3_value = getenv(var);
+    if (arg3_value != NULL) {
+        printf("Con arg3 main %s=%s(%p) @0x%lx\n", var, arg3_value, (void *)arg3_value, base_address);
+    } else {
+        printf("Variable %s not found\n", var);
+        return;
+    }
+
+    // Obtener la dirección en environ
+    char *environ_value = NULL;
+    for (int i = 0; environ[i] != NULL; i++) {
+        if (strncmp(environ[i], var, strlen(var)) == 0 && environ[i][strlen(var)] == '=') {
+            environ_value = environ[i] + strlen(var) + 1;
+            break;
+        }
+    }
+
+    if (environ_value != NULL) {
+        printf(" Con environ %s=%s(%p) @0x%lx\n", var, environ_value, (void *)environ_value, base_address);
+    } else {
+        printf("Variable %s not found\n", var);
+        return;
+    }
+
+    // Imprimir la información de getenv
+    char *getenv_value = getenv(var);
+    if (getenv_value != NULL) {
+        printf("   Con getenv %s=%s(%p)\n", var, getenv_value, (void *)getenv_value);
+    } else {
+        printf("Variable %s not found\n", var);
+    }
+}
+
+void showAllVars() {
+    extern char **environ;
+    for (int i = 0; environ[i] != NULL; i++) {
+        // Copiar la variable de entorno antes de modificarla
+        char *var = strdup(environ[i]);
+        char *value = strchr(var, '=');
+
+        if (value != NULL) {
+            *value = '\0';
+            value++;
+
+            printf("%p->main arg3[%d]=%s(%p) %s=%s\n", (void *)&environ[i], i, value, (void *)value, var, value);
+
+            // Liberar la memoria después de su uso
+            free(var);
+        }
+    }
+}
+
+void cmd_showvar(char *arguments[MAX_ARGUMENTS], int nArguments) {
+    // Verificar el número de argumentos
+    if (nArguments > 2) {
+        fprintf(stderr, "Error: Comando no reconocido. Uso: showvar [variable]\n");
+        return;
+    }
+
+    // Si no se proporciona ninguna variable de entorno específica
+    if (arguments[1] == NULL) {
+        showAllVars();
+    } else {
+        showVar(arguments[1]);
+    }
+}
+
+
+
+
 
 
 void cmd_fork (tList *processList) {
