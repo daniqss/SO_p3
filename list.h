@@ -119,9 +119,10 @@ tPos findElementM(void* index, tListF L, allocationType type);
 
 void allocateItemP(tItem *qElement, tItem item);
 void freeItemP(void* p);
-tPos findElementP(pid_t pid, tListP L);
+tItemP *findElementP(int pid, tListP L);
 void displayListP(tListP L);
-tItemP updateItemP (tItemP item, int options);
-void removeJobs(tListP *processList, statusType status);
+void displayItemP(tItemP *p);
+void updateItemP (tItemP *item, int options);
+void removeTermSig(tListP *processList, statusType status);
 
 #endif
