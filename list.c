@@ -462,12 +462,12 @@ void freeItemP(void* element) {
     }
 }
 
-tPos findElementP(int pid, tListP L) {
+tItemP *findElementP(int pid, tListP L) {
     tPos p;
 
     for (p = L; (p != NULL) && (((tItemP *)(p->data))->pid != pid); p = p->next);
 
-    return p;
+    return ((tItemP *)(p->data));
 }
 
 
@@ -480,70 +480,89 @@ void displayListP(tListP L) {
         if (p->data != NULL) {
             pElement = ((tItemP *)(p->data));
 
-            *pElement = updateItemP(*pElement, WNOHANG);
+            updateItemP(pElement, WNOHANG);
 
-            printf("PID: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->pid, pElement->command);
-            printf("Status: \033[33m%d\033[0m -> \033[34m%s\033[0m\n", pElement->status, ctime(&pElement->startTime));
-            printf("Priority: \033[33m%d\033[0m\n", getpriority(PRIO_PROCESS, pElement->pid));
-
-            switch (pElement->status) {
-                case FINISHED:
-                    printf("Status -> \033[34m%s\033[0m\n", "FINISHED");
-                    break;
-                case STOPPED:
-                    printf("Status: -> \033[34m%s\033[0m\n", "STOPPED");
-                    break;
-                case SIGNALED:
-                    printf("Status: -> \033[34m%s\033[0m\n", "SIGNALED");
-                    break;
-                case ACTIVE:
-                    printf("Status: -> \033[34m%s\033[0m\n", "ACTIVE");
-                    break;
-                default:
-                    break;
-            }
-
+            displayItemP(pElement);
         }
     }
 }
 
-tItemP updateItemP (tItemP item, int options) {
+void displayItemP (tItemP *p) {
+    printf("\033[33m%d\033[0m\t", p->pid);
+    printf("\033[33m%d\033[0m  ", getpriority(PRIO_PROCESS, p->pid));
+
+    switch (p->status) {
+        case FINISHED:
+            printf("\033[34m%s\033[0m  ", "FINISHED");
+            break;
+        case STOPPED:
+            printf("\033[34m%s\033[0m  ", "STOPPED");
+            break;
+        case SIGNALED:
+            printf("\033[34m%s\033[0m  ", "SIGNALED");
+            break;
+        case ACTIVE:
+            printf("\033[34m%s\033[0m  ", "ACTIVE");
+            break;
+        default:
+            break;
+    }
+    printf("\033[34m%s\033[0m  ", p->command);
+    printf("\033[34m%s\033[0m", ctime(&p->startTime));
+}
+
+void updateItemP (tItemP *item, int options) {
     int wstatus;
 	if(options != 0){
 		options = WNOHANG | WUNTRACED | WCONTINUED; 
 	}
 
-	if(waitpid(item.pid, &wstatus, options) == item.pid){
-		if(WIFEXITED(wstatus)){
-			item.status = FINISHED;
-			item.endTime = WEXITSTATUS(wstatus);
+	if (waitpid(item->pid, &wstatus, options) == item->pid){
+		if (WIFEXITED(wstatus)){
+			item->status = wstatus;
+            printf("(wstatus) %d mi enum %d\n", (wstatus), FINISHED);
+
 		} else if (WIFCONTINUED(wstatus)){
-			item.status = ACTIVE;
+			item->status = ACTIVE;
+            printf("(wstatus) %d mi enum %d\n", (wstatus), ACTIVE);
+
 		} else if (WIFSTOPPED(wstatus)){
-			item.status = STOPPED;
-			item.endTime = WTERMSIG(wstatus);
+			item->status = STOPPED;
+            printf("(wstatus) %d mi enum %d\n", (wstatus), STOPPED);
+
 		} else if (WIFSIGNALED(wstatus)){
-			item.status = SIGNALED;
-			item.endTime = WTERMSIG(wstatus);
+			item->status = SIGNALED;
+            printf("(wstatus) %d mi enum %d\n", (wstatus), SIGNALED);
 		}
 	}
-	return item;
 }
 
-void removeJobs(tListP *processList, statusType status) {
+void removeTermSig(tListP *processList, statusType status) {
     tPos p;
     tItemP *pElement;
+    int i;
     printf("removeJobs\n");
-    for (p = *processList; p != NULL; p = next(p)) {
-        printf("p %p\n", p);
+    printf("FINISHED %d\n", FINISHED);
+    printf("STOPPED %d\n", STOPPED);
+    printf("SIGNALED %d\n", SIGNALED);
+    printf("ACTIVE %d\n", ACTIVE);
+
+    for (p = first(*processList); p != NULL; p = next(p)) {
+        printf("p %p iteracion %d\n", p, i);
+
         if (p->data != NULL) {
             printf("p->data %p\n", p->data);
-            pElement = ((tItemP *)(p->data));
 
-            if (pElement->status == status) {
-                printf("pElement->status %p\n", &(pElement->status));
-                removeElement(p, processList, freeItemP);
+            if (((tItemP *)(p->data)) != NULL) {
+                pElement = ((tItemP *)(p->data));
+
+                if (pElement->status == status) {
+                    printf("pElement->status %p\n", &(pElement->status));
+
+                    removeElement(p, processList, freeItemP);
+                }
             }
         }
+        i++;
     }
 }
