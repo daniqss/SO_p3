@@ -1382,7 +1382,7 @@ void showVar(const char *var) {
     // Imprimir la información de getenv
     char *getenv_value = getenv(var);
     if (getenv_value != NULL) {
-        printf("   Con getenv %s=%s(%p)\n", var, getenv_value, (void *)getenv_value);
+        printf("   Con getenv %s(%p)\n",     getenv_value, (void *)getenv_value);
     } else {
         printf("Variable %s not found\n", var);
     }
@@ -1401,16 +1401,16 @@ void showAllVars() {
 
             printf("%p->main arg3[%d]=%s(%p) %s=%s\n", (void *)&environ[i], i, value, (void *)value, var, value);
 
-            // Liberar la memoria después de su uso
-            free(var);
         }
+        // Liberar la memoria
+        free(var);
     }
 }
 
 void cmd_showvar(char *arguments[MAX_ARGUMENTS], int nArguments) {
     // Verificar el número de argumentos
     if (nArguments > 2) {
-        fprintf(stderr, "Error: Comando no reconocido. Uso: showvar [variable]\n");
+        fprintf(stderr, "Error: showvar [variable]\n");
         return;
     }
 
@@ -1422,10 +1422,182 @@ void cmd_showvar(char *arguments[MAX_ARGUMENTS], int nArguments) {
     }
 }
 
+int BuscarVariable (char * var, char *e[]){
+    int pos=0;
+    char aux[MAX_BUFFER];
 
+    strcpy (aux,var);
+    strcat (aux,"=");
 
+    while (e[pos]!=NULL)
+        if (!strncmp(e[pos],aux,strlen(aux)))
+            return (pos);
+        else
+            pos++;
+    errno=ENOENT;   /*no hay tal variable*/
+    return(-1);
+}
 
+int CambiarVariable(char * var, char * valor, char *e[]){
+    int pos;
+    char *aux;
 
+    if ((pos=BuscarVariable(var,e))==-1)
+        return(-1);
+
+    if ((aux=(char *)malloc(strlen(var)+strlen(valor)+2))==NULL)
+        return -1;
+    strcpy(aux,var);
+    strcat(aux,"=");
+    strcat(aux,valor);
+    strcpy(e[pos],aux);
+    free(aux);
+    return (pos);
+
+}
+
+void changeByArg3(const char *var, const char *value) {
+    setenv(var, value, 1); //Establecemos el nuevo valor de la variable
+    showVar(var); //Mostramos el cambio
+}
+
+void changeByEnviron(const char *var, const char *value) {
+    extern char **environ;
+
+    int result = CambiarVariable((char *)var, (char *)value, environ); //Establecemos el nuevo valor de la variable
+
+    if (result == -1) {
+        fprintf(stderr, "Error: No se pudo cambiar la variable %s en el entorno\n", var);
+        return;
+    }
+
+    showVar(var); //Mostramos el cambio
+}
+
+void changeByGetenv(const char *var, const char *value) {
+
+    char *newVar = malloc(strlen(var) + 1 + strlen(value) + 1);// Crear una cadena en el formato "VAR=VAL"
+    snprintf(newVar, strlen(var) + 1 + strlen(value) + 1, "%s=%s", var, value);
+
+    // Modificar el valor mediante putenv
+    putenv(newVar);
+
+    // Mostrar información utilizando la función existente showVar
+    showVar(var);
+
+    // Liberar la memoria después de su uso
+    free(newVar);
+}
+
+void cmd_changevar(char *arguments[MAX_ARGUMENTS], int nArguments) {
+    if (nArguments < 4 || nArguments > 5) {
+        fprintf(stderr, "Error: changevar [-a|-e|-p] var valor\n");
+        return;
+    }
+
+    const char *choice = arguments[1];
+    const char *var = arguments[2];
+    const char *value = arguments[3];
+
+    if (strcmp(choice, "-a") == 0) {
+        changeByArg3(var, value);
+    } else if (strcmp(choice, "-e") == 0) {
+        changeByEnviron(var, value);
+    } else if (strcmp(choice, "-p") == 0) {
+        changeByGetenv(var, value);
+    } else {
+        fprintf(stderr, "Error: changevar [-a|-e|-p] var valor\n");
+    }
+}
+
+void subsvarByArg3(const char *var1, const char *var2, const char *value) {
+    // Obtener el valor actual de var1 en arg3
+    char *currentValue = getenv(var1);
+
+    if (currentValue == NULL) {
+        fprintf(stderr, "Variable %s not found\n", var1);
+        return;
+    }
+
+    // Eliminar var1 del entorno
+    unsetenv(var1);
+
+    // Establecer el nuevo valor de var2 en arg3
+    setenv(var2, value, 1);
+
+    // Mostrar el resultado
+    showVar(var2);
+}
+
+void subsvarByEnviron(const char *var1, const char *var2, const char *value) {
+    // Verificar si var1 existe en environ
+    int pos = BuscarVariable((char *)var1, __environ);
+    if (pos == -1) {
+        fprintf(stderr, "Imposible sustituir variable %s por %s: No such file or directory\n", var1, var2);
+        return;
+    }
+
+    // Cambiar el nombre de var1 a var2 en environ y mantener el mismo valor
+    int len = strlen(var2) + 1 + strlen(value) + 1;
+    char *aux = malloc(len);
+    if (aux == NULL) {
+        perror("Error en malloc");
+        exit(EXIT_FAILURE);
+    }
+
+    snprintf(aux, len, "%s=%s", var2, value);
+    __environ[pos] = aux;
+
+    showVar(var2);
+}
+
+void cmd_subsvar(char *arguments[MAX_ARGUMENTS], int nArguments) {
+    if (nArguments != 5) {
+        fprintf(stderr, "Error: Uso incorrecto. Uso: subsvar [-a|-e] var1 var2 valor\n");
+        return;
+    }
+
+    const char *choice = arguments[1];
+    const char *var1 = arguments[2];
+    const char *var2 = arguments[3];
+    const char *valor = arguments[4];
+
+    if (strcmp(choice, "-a") == 0) {
+        // Acceder por el tercer argumento de main
+        subsvarByArg3(var1, var2, valor);
+    } else if (strcmp(choice, "-e") == 0) {
+        // Acceder mediante environ
+        subsvarByEnviron(var1, var2, valor);
+    } else {
+        fprintf(stderr, "Error: Opción no reconocida. Uso: subsvar [-a|-e] var1 var2 valor\n");
+    }
+}
+
+void cmd_showenv(char *arguments[MAX_ARGUMENTS], int nArguments) {
+    if (nArguments != 2) {
+        fprintf(stderr, "Error: Uso incorrecto. Uso: showenv [-environ|-addr]\n");
+        return;
+    }
+
+    const char *choice = arguments[1];
+
+    if (strcmp(choice, "-environ") == 0) {
+        extern char **environ;
+        for (int i = 0; environ[i] != NULL; i++) {
+            printf("%p->environ[%d]=(%p) %s\n", (void *)&environ[i], i, (void *)environ[i], environ[i]);
+        }
+    } else if (strcmp(choice, "-addr") == 0) {
+        uintptr_t base_address = (uintptr_t)__builtin_frame_address(0);
+
+        // Mostrar la dirección de environ
+        printf("environ:   %p (almacenado en %p)\n", (void *)__environ, (void *)&__environ);
+
+        // Mostrar la dirección del tercer argumento de main (arg3)
+        printf("main arg3: %p (almacenado en %p)\n", (void *)__environ, (void *)base_address);
+    } else {
+        fprintf(stderr, "Error: Opción no reconocida. Uso: showenv [-environ|-addr]\n");
+    }
+}
 
 void cmd_fork (tList *processList) {
 	pid_t pid;

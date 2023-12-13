@@ -197,6 +197,12 @@ bool processCommand(char **arguments, int nArguments, int *recursiveCount, tList
         cmd_uid(arguments, nArguments);
     else if (strcmp(arguments[0],"showvar")==0)
         cmd_showvar(arguments, nArguments);
+    else if (strcmp(arguments[0],"changevar")==0)
+        cmd_changevar(arguments, nArguments);
+    else if (strcmp(arguments[0],"subsvar")==0)
+        cmd_subsvar(arguments, nArguments);
+    else if (strcmp(arguments[0],"showenv")==0)
+        cmd_showenv(arguments, nArguments);
     else if (strcmp(arguments[0],"fork")==0)
         cmd_fork(processList);
     else if (strcmp(arguments[0],"exec")==0)
