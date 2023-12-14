@@ -561,7 +561,7 @@ void displayListP(tListP L) {
         if (p->data != NULL) {
             pElement = ((tItemP *)(p->data));
 
-            wstatus = updateItemP(pElement, WNOHANG);
+            wstatus = updateItemP(pElement, WNOHANG | WUNTRACED | WCONTINUED);
 
             displayItemP(pElement, wstatus);
         }
@@ -596,10 +596,6 @@ void displayItemP (tItemP *p, int wstatus) {
 
 int updateItemP (tItemP *item, int options) {
     int wstatus = 0;
-
-	if(options != 0){
-		options = WNOHANG | WUNTRACED | WCONTINUED; 
-	}
 
 	if (waitpid(item->pid, &wstatus, options) == item->pid) {
 		if (WIFEXITED(wstatus)) {

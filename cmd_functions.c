@@ -1737,7 +1737,7 @@ void cmd_job(char **arguments, int nArguments, tListP *processList) {
         p = findElementP(atoi(arguments[1]), *processList);
         item = (tItemP*)(p->data);
 
-        wstatus = updateItemP(item, WNOHANG | WUNTRACED);
+        wstatus = updateItemP(item, WNOHANG | WUNTRACED | WCONTINUED);
         displayItemP(item, wstatus);
     }
 }
@@ -1778,7 +1778,7 @@ void moveToForeground(tItemP *p) {
             perror("Error al restablecer el grupo de procesos");
             return;
         }
-        updateItemP(p, WUNTRACED);
+        updateItemP(p, WUNTRACED | WCONTINUED | WNOHANG);
     } else if (pid == -1) {
         // Error al esperar al proceso hijo
         perror("Error al esperar al proceso hijo");
