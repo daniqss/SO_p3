@@ -207,6 +207,8 @@ bool processCommand(char **arguments, int nArguments, int *recursiveCount, tList
         cmd_fork(processList);
     else if (strcmp(arguments[0],"exec")==0)
         cmd_exec(arguments, nArguments);
+    else if (strcmp(arguments[0],"job")==0)
+        cmd_job(arguments, nArguments, processList);
     else if (strcmp(arguments[0],"jobs")==0)
         cmd_jobs(processList);
     else if (strcmp(arguments[0], "deljobs")==0)

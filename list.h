@@ -121,8 +121,8 @@ void allocateItemP(tItem *qElement, tItem item);
 void freeItemP(void* p);
 tPos findElementP(int pid, tListP L);
 void displayListP(tListP L);
-void displayItemP(tItemP *p);
-void updateItemP (tItemP *item, int options);
+void displayItemP(tItemP *p, int wstatus);
+int updateItemP (tItemP *item, int options);
 void removeTermSig(tListP *processList, statusType status);
 
 #endif

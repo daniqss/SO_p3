@@ -55,82 +55,7 @@ int variableGlobal1Ni;
 int variableGlobal2Ni;
 int variableGlobal3Ni;
 
-struct SEN {
-    char *nombre;
-    int senal;
-};
 
-static struct SEN sigstrnum[]={   
-	{"HUP", SIGHUP},
-	{"INT", SIGINT},
-	{"QUIT", SIGQUIT},
-	{"ILL", SIGILL}, 
-	{"TRAP", SIGTRAP},
-	{"ABRT", SIGABRT},
-	{"IOT", SIGIOT},
-	{"BUS", SIGBUS},
-	{"FPE", SIGFPE},
-	{"KILL", SIGKILL},
-	{"USR1", SIGUSR1},
-	{"SEGV", SIGSEGV},
-	{"USR2", SIGUSR2}, 
-	{"PIPE", SIGPIPE},
-	{"ALRM", SIGALRM},
-	{"TERM", SIGTERM},
-	{"CHLD", SIGCHLD},
-	{"CONT", SIGCONT},
-	{"STOP", SIGSTOP},
-	{"TSTP", SIGTSTP}, 
-	{"TTIN", SIGTTIN},
-	{"TTOU", SIGTTOU},
-	{"URG", SIGURG},
-	{"XCPU", SIGXCPU},
-	{"XFSZ", SIGXFSZ},
-	{"VTALRM", SIGVTALRM},
-	{"PROF", SIGPROF},
-	{"WINCH", SIGWINCH}, 
-	{"IO", SIGIO},
-	{"SYS", SIGSYS},
-/*senales que no hay en todas partes*/
-#ifdef SIGPOLL
-	{"POLL", SIGPOLL},
-#endif
-#ifdef SIGPWR
-	{"PWR", SIGPWR},
-#endif
-#ifdef SIGEMT
-	{"EMT", SIGEMT},
-#endif
-#ifdef SIGINFO
-	{"INFO", SIGINFO},
-#endif
-#ifdef SIGSTKFLT
-	{"STKFLT", SIGSTKFLT},
-#endif
-#ifdef SIGCLD
-	{"CLD", SIGCLD},
-#endif
-#ifdef SIGLOST
-	{"LOST", SIGLOST},
-#endif
-#ifdef SIGCANCEL
-	{"CANCEL", SIGCANCEL},
-#endif
-#ifdef SIGTHAW
-	{"THAW", SIGTHAW},
-#endif
-#ifdef SIGFREEZE
-	{"FREEZE", SIGFREEZE},
-#endif
-#ifdef SIGLWP
-	{"LWP", SIGLWP},
-#endif
-#ifdef SIGWAITING
-	{"WAITING", SIGWAITING},
-#endif
- 	{NULL,-1},
-};    
-/*fin array sigstrnum */
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~COMANDOS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1732,7 +1657,7 @@ void cmd_exec (char *arguments[MAX_ARGUMENTS], int nArguments) {
         return;
     }
 
-
+    /* No implementada totalmente la parte opcional, solo recoje los argumentos */
     while (isEnvVar(arguments[envc + 1])) {
         envp[envc] = arguments[envc + 1];
         envc++;
@@ -1788,16 +1713,18 @@ char* getCommandPath(const char *command) {
 void cmd_job(char **arguments, int nArguments, tListP *processList) {
     tPos p;
     tItemP *item;
+    int wstatus;
 
     if (nArguments < 2) {
         displayListP(*processList);
         return;
     }
     
-    p = findElementP(atoi(arguments[2]), *processList);
-    item = (tItemP*)(p->data);
 
     if (strcmp(arguments[1], "-fg") == 0) {
+        p = findElementP(atoi(arguments[2]), *processList);
+        item = (tItemP*)(p->data);
+
         if (arguments[2] == NULL) {
             printf("Error, no se ha especificado el proceso\n");   
             return;
@@ -1806,8 +1733,13 @@ void cmd_job(char **arguments, int nArguments, tListP *processList) {
         moveToForeground(item);
         removeElement(p, processList, freeItemP);
     }
-    else 
-        displayItemP(item);
+    else {
+        p = findElementP(atoi(arguments[1]), *processList);
+        item = (tItemP*)(p->data);
+
+        wstatus = updateItemP(item, WNOHANG | WUNTRACED);
+        displayItemP(item, wstatus);
+    }
 }
 
 void moveToForeground(tItemP *p) {
@@ -1856,7 +1788,6 @@ void moveToForeground(tItemP *p) {
 
 
 void cmd_jobs(tListP *processList) {
-    printf("PID\tTIME\tSTATUS\tCOMMAND\n");
     displayListP(*processList);
 }
 
@@ -1952,24 +1883,4 @@ void executeInBackground(char* commandPath, char **argv, tListP *processList)  {
         insertElement(&newItem, processList, allocateItemP);
         printf("Ejecutando proceso %d en segundo plano\n", pid);
     }
-}
-
-int signalValue(char * sen)  {
-    /*devuelve el numero de senial a partir del nombre*/ 
-    int i;
-    for (i=0; sigstrnum[i].nombre!=NULL; i++)
-        if (!strcmp(sen, sigstrnum[i].nombre))
-            return sigstrnum[i].senal;
-    return -1;
-}
-
-
-char *signalName(int sen) {
-    /*devuelve el nombre senal a partir de la senal*/ 
-	/* para sitios donde no hay sig2str*/
-    int i;
-    for (i=0; sigstrnum[i].nombre!=NULL; i++)
-  	    if (sen==sigstrnum[i].senal)
-		    return sigstrnum[i].nombre;
-    return ("SIGUNKNOWN");
 }

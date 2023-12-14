@@ -5,6 +5,85 @@ AUTORES: Santiago Garea Cidre (s.garea@udc.es)
 
 #include "list.h"
 
+struct SEN {
+    char *nombre;
+    int senal;
+};
+
+static struct SEN sigstrnum[] = {   
+	{"HUP", SIGHUP},
+	{"INT", SIGINT},
+	{"QUIT", SIGQUIT},
+	{"ILL", SIGILL}, 
+	{"TRAP", SIGTRAP},
+	{"ABRT", SIGABRT},
+	{"IOT", SIGIOT},
+	{"BUS", SIGBUS},
+	{"FPE", SIGFPE},
+	{"KILL", SIGKILL},
+	{"USR1", SIGUSR1},
+	{"SEGV", SIGSEGV},
+	{"USR2", SIGUSR2}, 
+	{"PIPE", SIGPIPE},
+	{"ALRM", SIGALRM},
+	{"TERM", SIGTERM},
+	{"CHLD", SIGCHLD},
+	{"CONT", SIGCONT},
+	{"STOP", SIGSTOP},
+	{"TSTP", SIGTSTP}, 
+	{"TTIN", SIGTTIN},
+	{"TTOU", SIGTTOU},
+	{"URG", SIGURG},
+	{"XCPU", SIGXCPU},
+	{"XFSZ", SIGXFSZ},
+	{"VTALRM", SIGVTALRM},
+	{"PROF", SIGPROF},
+	{"WINCH", SIGWINCH}, 
+	{"IO", SIGIO},
+	{"SYS", SIGSYS},
+/*senales que no hay en todas partes*/
+#ifdef SIGPOLL
+	{"POLL", SIGPOLL},
+#endif
+#ifdef SIGPWR
+	{"PWR", SIGPWR},
+#endif
+#ifdef SIGEMT
+	{"EMT", SIGEMT},
+#endif
+#ifdef SIGINFO
+	{"INFO", SIGINFO},
+#endif
+#ifdef SIGSTKFLT
+	{"STKFLT", SIGSTKFLT},
+#endif
+#ifdef SIGCLD
+	{"CLD", SIGCLD},
+#endif
+#ifdef SIGLOST
+	{"LOST", SIGLOST},
+#endif
+#ifdef SIGCANCEL
+	{"CANCEL", SIGCANCEL},
+#endif
+#ifdef SIGTHAW
+	{"THAW", SIGTHAW},
+#endif
+#ifdef SIGFREEZE
+	{"FREEZE", SIGFREEZE},
+#endif
+#ifdef SIGLWP
+	{"LWP", SIGLWP},
+#endif
+#ifdef SIGWAITING
+	{"WAITING", SIGWAITING},
+#endif
+ 	{NULL,-1},
+};  
+
+char *signalName(int sen);
+
+
 bool isEmpty(tList L) {
     return L == NULL;
 }
@@ -474,6 +553,7 @@ tPos findElementP(int pid, tListP L) {
 void displayListP(tListP L) {
     tPos p;
     tItemP *pElement;
+    int wstatus;
 
     if (isEmpty(L)) return;
 
@@ -481,14 +561,15 @@ void displayListP(tListP L) {
         if (p->data != NULL) {
             pElement = ((tItemP *)(p->data));
 
-            updateItemP(pElement, WNOHANG);
+            wstatus = updateItemP(pElement, WNOHANG);
 
-            displayItemP(pElement);
+            displayItemP(pElement, wstatus);
         }
     }
 }
 
-void displayItemP (tItemP *p) {
+void displayItemP (tItemP *p, int wstatus) {
+
     printf("\033[33m%d\033[0m\t", p->pid);
     printf("\033[33m%d\033[0m  ", getpriority(PRIO_PROCESS, p->pid));
 
@@ -501,6 +582,7 @@ void displayItemP (tItemP *p) {
             break;
         case SIGNALED:
             printf("\033[34m%s\033[0m  ", "SIGNALED");
+            printf("\033[34m%s\033[0m  ", signalName(WTERMSIG(wstatus)));
             break;
         case ACTIVE:
             printf("\033[34m%s\033[0m  ", "ACTIVE");
@@ -512,26 +594,29 @@ void displayItemP (tItemP *p) {
     printf("\033[34m%s\033[0m", ctime(&p->startTime));
 }
 
-void updateItemP (tItemP *item, int options) {
-    int wstatus;
+int updateItemP (tItemP *item, int options) {
+    int wstatus = 0;
+
 	if(options != 0){
 		options = WNOHANG | WUNTRACED | WCONTINUED; 
 	}
 
-	if (waitpid(item->pid, &wstatus, options) == item->pid){
-		if (WIFEXITED(wstatus)){
+	if (waitpid(item->pid, &wstatus, options) == item->pid) {
+		if (WIFEXITED(wstatus)) {
 			item->status = wstatus;
 
-		} else if (WIFCONTINUED(wstatus)){
+		} else if (WIFCONTINUED(wstatus)) {
 			item->status = ACTIVE;
 
-		} else if (WIFSTOPPED(wstatus)){
+		} else if (WIFSTOPPED(wstatus)) {
 			item->status = STOPPED;
 
-		} else if (WIFSIGNALED(wstatus)){
+		} else if (WIFSIGNALED(wstatus)) {
 			item->status = SIGNALED;
+
 		}
 	}
+    return wstatus;
 }
 
 void removeTermSig(tListP *processList, statusType status) {
@@ -556,4 +641,14 @@ void removeTermSig(tListP *processList, statusType status) {
             removeElement(p, processList, freeItemP);
         }
     }
+}
+
+char *signalName(int sen) {
+    /*devuelve el nombre senal a partir de la senal*/ 
+	/* para sitios donde no hay sig2str*/
+    int i;
+    for (i=0; sigstrnum[i].nombre!=NULL; i++)
+  	    if (sen==sigstrnum[i].senal)
+		    return sigstrnum[i].nombre;
+    return ("SIGUNKNOWN");
 }
