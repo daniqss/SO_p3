@@ -119,7 +119,7 @@ tPos findElementM(void* index, tListF L, allocationType type);
 
 void allocateItemP(tItem *qElement, tItem item);
 void freeItemP(void* p);
-tItemP *findElementP(int pid, tListP L);
+tPos findElementP(int pid, tListP L);
 void displayListP(tListP L);
 void displayItemP(tItemP *p);
 void updateItemP (tItemP *item, int options);

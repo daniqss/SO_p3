@@ -1433,31 +1433,40 @@ char* getCommandPath(const char *command) {
         pathToken = strtok(NULL, ":");
     }
 
-    free(path);
     free(pathCopy);
     free(commandPath);
-    return NULL;
+    return NULL; 
     // Si no encontramos el comando devolvemos NULL
 }
 
 void cmd_job(char **arguments, int nArguments, tListP *processList) {
+    tPos p;
+    tItemP *item;
+
+    if (nArguments < 2) {
+        displayListP(*processList);
+        return;
+    }
     
-    if (nArguments < 2) return;
-    
+    p = findElementP(atoi(arguments[2]), *processList);
+    item = (tItemP*)(p->data);
+
     if (strcmp(arguments[1], "-fg") == 0) {
         if (arguments[2] == NULL) {
             printf("Error, no se ha especificado el proceso\n");   
             return;
         }
-        moveToForeground(findElementP(atoi(arguments[2]), *processList));
-        displayItemP(findElementP(atoi(arguments[2]), *processList));
+
+        moveToForeground(item);
+        removeElement(p, processList, freeItemP);
     }
     else 
-        displayItemP(findElementP(atoi(arguments[1]), *processList));
+        displayItemP(item);
 }
 
 void moveToForeground(tItemP *p) {
     int wstatus;
+    pid_t pid;
 
     if (p->status == STOPPED) {
         // Reanuda el proceso
@@ -1474,9 +1483,9 @@ void moveToForeground(tItemP *p) {
     }
     // Establece el grupo de procesos para la terminal actual
 
-    pid_t child_pid = waitpid(p->pid, &wstatus, WUNTRACED);
+    pid = waitpid(p->pid, &wstatus, WUNTRACED);
 
-    if (child_pid == p->pid) {
+    if (pid == p->pid) {
         // El proceso hijo ha terminado
         if (WIFEXITED(wstatus)) {
             printf("Proceso hijo (%d) terminado con código de salida %d\n", p->pid, WEXITSTATUS(wstatus));
@@ -1491,9 +1500,8 @@ void moveToForeground(tItemP *p) {
             perror("Error al restablecer el grupo de procesos");
             return;
         }
-
         updateItemP(p, WUNTRACED);
-    } else if (child_pid == -1) {
+    } else if (pid == -1) {
         // Error al esperar al proceso hijo
         perror("Error al esperar al proceso hijo");
         return;
@@ -1540,7 +1548,7 @@ void externalProgram(char **arguments, int nArguments, tList *processList) {
             argv[argc] = arguments[argc];
     }
     argc++;
-    argv[argc] = NULL;
+    argv[argc - 1] = NULL;
 
     if (arguments[nArguments - 1][0] != '&')
         executeInForeground(commandPath, argv);
@@ -1548,7 +1556,6 @@ void externalProgram(char **arguments, int nArguments, tList *processList) {
         executeInBackground(commandPath, argv, processList);
 
     free(commandPath);
-
 }
 
 void executeInForeground(char* commandPath, char **argv) {
@@ -1561,17 +1568,15 @@ void executeInForeground(char* commandPath, char **argv) {
             free(commandPath);
             exit(EXIT_FAILURE);
         }
-        free(commandPath);
 	}
 	else if (pid == -1) {
         // Error al crear el proceso hijo
         perror("fork");
-        free(commandPath);
         exit(EXIT_FAILURE);
     }
     else {
         // Proceso padre
-        waitpid(pid, NULL, 0);
+		waitpid (pid, NULL, 0);
     }
 }
 
@@ -1595,13 +1600,11 @@ void executeInBackground(char* commandPath, char **argv, tListP *processList)  {
         // Proceso padre
         newItem.pid = pid;
         newItem.startTime = time(NULL);
-        newItem.endTime = 0;
         newItem.status = ACTIVE;
         newItem.command = argv[0];
 
         insertElement(&newItem, processList, allocateItemP);
         printf("Ejecutando proceso %d en segundo plano\n", pid);
-        displayListP(*processList);
     }
 }
 
