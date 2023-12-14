@@ -1676,28 +1676,32 @@ void cmd_subsvar(char *arguments[MAX_ARGUMENTS], int nArguments) {
 }
 
 void cmd_showenv(char *arguments[MAX_ARGUMENTS], int nArguments) {
-    if (nArguments != 2) {
+    if (nArguments < 1 || nArguments > 2) {
         fprintf(stderr, "Error: Uso incorrecto: showenv [-environ|-addr]\n");
         return;
     }
 
-    const char *choice = arguments[1];
+    if (nArguments == 1){
+        showAllVars();
+    } else{
+        const char *choice = arguments[1];
 
-    if (strcmp(choice, "-environ") == 0) {
-        extern char **environ;
-        for (int i = 0; environ[i] != NULL; i++) {
-            printf("%p->environ[%d]=(%p) %s\n", (void *)&environ[i], i, (void *)environ[i], environ[i]);
+        if (strcmp(choice, "-environ") == 0) {
+            extern char **environ;
+            for (int i = 0; environ[i] != NULL; i++) {
+                printf("%p->environ[%d]=(%p) %s\n", (void *)&environ[i], i, (void *)environ[i], environ[i]);
+            }
+        } else if (strcmp(choice, "-addr") == 0) {
+            uintptr_t base_address = (uintptr_t)__builtin_frame_address(0);
+
+            // Mostrar la dirección de environ
+            printf("environ:   %p (almacenado en %p)\n", (void *)__environ, (void *)&__environ);
+
+            // Mostrar la dirección del tercer argumento de main (arg3)
+            printf("main arg3: %p (almacenado en %p)\n", (void *)__environ, (void *)base_address);
+        } else {
+            fprintf(stderr, "Error: Opción no reconocida: showenv [-environ|-addr]\n");
         }
-    } else if (strcmp(choice, "-addr") == 0) {
-        uintptr_t base_address = (uintptr_t)__builtin_frame_address(0);
-
-        // Mostrar la dirección de environ
-        printf("environ:   %p (almacenado en %p)\n", (void *)__environ, (void *)&__environ);
-
-        // Mostrar la dirección del tercer argumento de main (arg3)
-        printf("main arg3: %p (almacenado en %p)\n", (void *)__environ, (void *)base_address);
-    } else {
-        fprintf(stderr, "Error: Opción no reconocida: showenv [-environ|-addr]\n");
     }
 }
 
