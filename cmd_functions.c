@@ -644,7 +644,9 @@ void cmd_help(char *arguments[MAX_ARGUMENTS], int nArguments) {
         case 1:
             printf("'help [cmd]' ayuda sobre comandos\n"
                    "\t\tComandos disponibles: \n");
-            printf("exit bye fin quit help infosys listopen dup close open command hist time date chdir pid authors create delete deltree list stat\n");
+            printf("exit bye fin quit help infosys listopen dup close open command hist time date chdir pid authors create delete deltree list stat ");
+            printf("malloc shared mmap read write memdump memfill mem recurse ");
+            printf("uid showvar changevar subsvar showenv fork exec jobs deljobs job");
             break;
         case 2:
             if (strcmp(comando, "time") == 0) {
