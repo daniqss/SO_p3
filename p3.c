@@ -177,32 +177,41 @@ bool processCommand(char **arguments, int nArguments, int *recursiveCount, tList
         cmd_help(arguments,nArguments);
     else if (strcmp(arguments[0],"malloc")==0)
         cmd_malloc(arguments,nArguments, memoryList);
-    else if (strcmp(arguments[0],"shared") == 0)
+    else if (strcmp(arguments[0],"shared")==0)
         cmd_shared(arguments,nArguments, memoryList);
-    else if (strcmp(arguments[0],"mmap") == 0)
+    else if (strcmp(arguments[0],"mmap")==0)
         cmd_mmap(arguments,nArguments, memoryList);
-    else if (strcmp(arguments[0],"read") == 0)
+    else if (strcmp(arguments[0],"read")==0)
         cmd_read(arguments,nArguments);
-    else if (strcmp(arguments[0],"write") == 0)
+    else if (strcmp(arguments[0],"write")==0)
         cmd_write(arguments,nArguments);
-    else if (strcmp(arguments[0],"memfill") == 0)
+    else if (strcmp(arguments[0],"memfill")==0)
         cmd_memfill(arguments, nArguments, memoryList);
-    else if (strcmp(arguments[0],"memdump") == 0)
+    else if (strcmp(arguments[0],"memdump")==0)
         cmd_memdump(arguments, nArguments, memoryList);
-    else if (strcmp(arguments[0],"mem") == 0)
+    else if (strcmp(arguments[0],"mem")==0)
         cmd_mem(arguments,nArguments, memoryList);
-    else if (strcmp(arguments[0],"recurse") == 0)
+    else if (strcmp(arguments[0],"recurse")==0)
         cmd_recurse(arguments, nArguments);
-    else if (strcmp(arguments[0],"fork") == 0)
+    else if (strcmp(arguments[0],"uid")==0)
+        cmd_uid(arguments, nArguments);
+    else if (strcmp(arguments[0],"showvar")==0)
+        cmd_showvar(arguments, nArguments);
+    else if (strcmp(arguments[0],"changevar")==0)
+        cmd_changevar(arguments, nArguments);
+    else if (strcmp(arguments[0],"subsvar")==0)
+        cmd_subsvar(arguments, nArguments);
+    else if (strcmp(arguments[0],"showenv")==0)
+        cmd_showenv(arguments, nArguments);
+    else if (strcmp(arguments[0],"fork")==0)
         cmd_fork(processList);
-    else if (strcmp(arguments[0],"exec") == 0)
+    else if (strcmp(arguments[0],"exec")==0)
         cmd_exec(arguments, nArguments);
-    else if (strcmp(arguments[0],"job") == 0)
-        cmd_job(arguments, nArguments, processList);
-    else if (strcmp(arguments[0], "jobs")==0)
+    else if (strcmp(arguments[0],"jobs")==0)
         cmd_jobs(processList);
     else if (strcmp(arguments[0], "deljobs")==0)
         cmd_deljobs(arguments, nArguments, processList);
+
 
     else if ((strcmp(arguments[0], "quit") == 0) || (strcmp(arguments[0], "bye") == 0) || (strcmp(arguments[0], "exit") == 0))
         return false;
