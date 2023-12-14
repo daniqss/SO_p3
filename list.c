@@ -438,14 +438,13 @@ void allocateItemP(tItem *qElement, tItem item) {
 
     // Asigna memoria para fileName
     if ((newItemP->command = (char*)malloc(strlen(((tItemP*)item)->command) + 1)) == NULL) {
-        perror("Memory allocation for fileName failed\n");
+        perror("Memory allocation for command failed\n");
         free(newItemP);
         exit(EXIT_FAILURE);
     }
 
     newItemP->pid = ((tItemP*)item)->pid;
     newItemP->startTime = ((tItemP*)item)->startTime;
-    newItemP->endTime = ((tItemP*)item)->endTime;
     newItemP->status = ((tItemP*)item)->status;
     strcpy(newItemP->command, ((tItemP*)item)->command);
 
@@ -459,23 +458,25 @@ void freeItemP(void* element) {
         free(item->command);
         item->command = NULL;
         free(item);
+        item = NULL;
     }
 }
 
-tItemP *findElementP(int pid, tListP L) {
+tPos findElementP(int pid, tListP L) {
     tPos p;
 
     for (p = L; (p != NULL) && (((tItemP *)(p->data))->pid != pid); p = p->next);
 
-    return ((tItemP *)(p->data));
+    return p;
 }
 
 
 void displayListP(tListP L) {
     tPos p;
     tItemP *pElement;
-    printf("displayListP\n");
+
     if (isEmpty(L)) return;
+
     for (p = L; p != NULL; p = next(p)) {
         if (p->data != NULL) {
             pElement = ((tItemP *)(p->data));
@@ -520,19 +521,15 @@ void updateItemP (tItemP *item, int options) {
 	if (waitpid(item->pid, &wstatus, options) == item->pid){
 		if (WIFEXITED(wstatus)){
 			item->status = wstatus;
-            printf("(wstatus) %d mi enum %d\n", (wstatus), FINISHED);
 
 		} else if (WIFCONTINUED(wstatus)){
 			item->status = ACTIVE;
-            printf("(wstatus) %d mi enum %d\n", (wstatus), ACTIVE);
 
 		} else if (WIFSTOPPED(wstatus)){
 			item->status = STOPPED;
-            printf("(wstatus) %d mi enum %d\n", (wstatus), STOPPED);
 
 		} else if (WIFSIGNALED(wstatus)){
 			item->status = SIGNALED;
-            printf("(wstatus) %d mi enum %d\n", (wstatus), SIGNALED);
 		}
 	}
 }
@@ -540,29 +537,23 @@ void updateItemP (tItemP *item, int options) {
 void removeTermSig(tListP *processList, statusType status) {
     tPos p;
     tItemP *pElement;
-    int i;
-    printf("removeJobs\n");
-    printf("FINISHED %d\n", FINISHED);
-    printf("STOPPED %d\n", STOPPED);
-    printf("SIGNALED %d\n", SIGNALED);
-    printf("ACTIVE %d\n", ACTIVE);
 
-    for (p = first(*processList); p != NULL; p = next(p)) {
-        printf("p %p iteracion %d\n", p, i);
+    if (isEmpty(*processList)) return;
 
+    for (p = *processList; p->next != NULL; p = next(p)) {
         if (p->data != NULL) {
-            printf("p->data %p\n", p->data);
+            pElement = ((tItemP *)(p->data));
 
-            if (((tItemP *)(p->data)) != NULL) {
-                pElement = ((tItemP *)(p->data));
-
-                if (pElement->status == status) {
-                    printf("pElement->status %p\n", &(pElement->status));
-
-                    removeElement(p, processList, freeItemP);
-                }
+            if (pElement->status == status) {
+                removeElement(p, processList, freeItemP);
             }
         }
-        i++;
+    }
+    if (p->data != NULL) {
+        pElement = ((tItemP *)(p->data));
+
+        if (pElement->status == status) {
+            removeElement(p, processList, freeItemP);
+        }
     }
 }
