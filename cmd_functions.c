@@ -603,7 +603,6 @@ void print_Stat(const char *file, const struct stat *fileStat, int include) {
     printf(" %lld %s \n", (long long)fileStat->st_size, file);
 }
 
-
 void cmd_stat (char *arguments[MAX_ARGUMENTS], int nArguments){
     int include = 0;
 
@@ -732,6 +731,38 @@ void cmd_help(char *arguments[MAX_ARGUMENTS], int nArguments) {
             } else if(strcmp(comando,"recurse")==0){
                 printf("recurse [n]\tInvoca a la funcion recursiva n veces\n");
             }
+            else if (strcmp(comando, "uid") == 0) {
+                printf("uid [-get|-set] [-l] [id]\tAccede a las credenciales del proceso que ejecuta el shell\n");
+                printf("\t-get: muestra las credenciales\n");
+                printf("\t-set id: establece la credencial al valor numerico id\n");
+                printf("\t-set -l id: establece la credencial a login id\n");
+            } else if (strcmp(comando, "showvar") == 0) {
+                printf("showvar var\tMuestra el valor y las direcciones de la variable de entorno var\n");
+            } else if (strcmp(comando, "changevar") == 0) {
+                printf("changevar [-a|-e|-p] var valor\tCambia el valor de una variable de entorno\n");
+                printf("\t-a: accede por el tercer arg de main\n");
+                printf("\t-e: accede mediante environ\n");
+                printf("\t-p: accede mediante putenv\n");
+            } else if (strcmp(comando, "subsvar") == 0) {
+                printf("subsvar [-a|-e] var1 var2 valor\tSustituye la variable de entorno var1 con var2=valor\n");
+                printf("\t-a: accede por el tercer arg de main\n");
+                printf("\t-e: accede mediante environ\n");
+            } else if (strcmp(comando, "showenv") == 0) {
+                printf("showenv [-environ|-addr]\tMuestra el entorno del proceso\n");
+                printf("\t-environ: accede usando environ (en lugar del tercer arg de main)\n");
+                printf("\t-addr: muestra el valor y donde se almacenan environ y el 3er arg main\n");
+            } else if (strcmp(comando, "fork") == 0) {
+                printf("fork\tEl shell hace fork y queda en espera a que su hijo termine\n");
+            } else if (strcmp(comando, "exec") == 0) {
+                printf("exec VAR1 VAR2 ..prog args....[@pri]\tEjecuta, sin crear proceso, prog con argumentos\n");
+                printf("\ten un entorno que contiene solo las variables VAR1, VAR2...\n");
+            } else if (strcmp(comando, "jobs") == 0) {
+                printf("jobs\tLista los procesos en segundo plano\n");
+            } else if (strcmp(comando, "deljobs") == 0) {
+                printf("deljobs [-term][-sig]\tElimina los procesos de la lista procesos en sp\n");
+                printf("\t-term: los terminados\n");
+                printf("\t-sig: los terminados por senal\n");
+            }
             break;
         default:
             printf("Comando desconocido: %s\n", comando);
@@ -767,7 +798,6 @@ void list_directory(const char *directoryName, int include) {
 
     closedir(dir);
 } //Función que muestra la el contenido de un directorio
-
 
 void reca(const char *directoryName, int include) {
     list_directory(directoryName, include);
@@ -1325,7 +1355,6 @@ void cmd_mem(char *arguments[MAX_ARGUMENTS], int nArguments, tListM *memoryList)
     }
 }
 
-
 void cmd_recurse(char *arguments[MAX_ARGUMENTS], int nArguments) {
     if (nArguments < 2) {
         printf("Error: Se requiere un argumento para la cantidad de recursiones.\n");
@@ -1390,55 +1419,47 @@ void cmd_uid(char *arguments[MAX_ARGUMENTS], int nArguments) {
     uid_t currentUid = getuid();
     uid_t effectiveUid = geteuid();
 
-    if (nArguments > 1) {
-        if (strcmp(arguments[1], "-get") == 0) {
-            printUidInfo(currentUid, "Credencial real");
-            printUidInfo(effectiveUid, "Credencial efectiva");
-        } else if (strcmp(arguments[1], "-set") == 0) {
-            if (nArguments > 2) {
-                if (strcmp(arguments[2], "-l") == 0 && nArguments > 3) {
-                    // Establecer credencial por login
-                    if (setUidByName(arguments[3])) {
-                        printf("Credencial establecida por login: %s\n", arguments[3]);
-                    } else {
-                        printf("Imposible cambiar credencial: %s\n", strerror(errno));
-                    }
-                } else {
-                    int newUid;
-                    if (esEnteroPositivo(arguments[2], &newUid)) {
-                        // Establecer credencial por UID numérico
-                        if (setUid(newUid)) {
-                            printUidInfo(newUid, "Credencial establecida");
-                        } else {
-                            printf("Imposible cambiar credencial: %s\n", strerror(errno));
-                        }
-                    } else {
-                        printf("ID no válido\n");
-                    }
-                }
-            } else {
-                printf("Falta el ID para establecer la credencial\n");
-            }
-        } else {
-            printf("Comando no reconocido. Uso: uid [-get|-set] [-l] [id]\n");
-        }
-    } else {
+    if (nArguments == 1 || (nArguments > 1 && strcmp(arguments[1], "-get") == 0)) {
         printUidInfo(currentUid, "Credencial real");
         printUidInfo(effectiveUid, "Credencial efectiva");
     }
+    else if (nArguments > 1 && strcmp(arguments[1], "-set") == 0) {
+        if (nArguments > 2) {
+            if (strcmp(arguments[2], "-l") == 0 && nArguments > 3) {
+                if (setUidByName(arguments[3]))
+                    printf("Credencial establecida por login: %s\n", arguments[3]);
+                else
+                    printf("Imposible cambiar credencial: %s\n", strerror(errno));
+            }
+            else {
+                int newUid;
+                if (esEnteroPositivo(arguments[2], &newUid)) {
+                    if (setUid(newUid))
+                        printUidInfo(newUid, "Credencial establecida");
+                    else
+                        printf("Imposible cambiar credencial: %s\n", strerror(errno));
+                }
+                else
+                    printf("El ID es no válido\n");
+            }
+        }
+        else
+            printf("Falta el ID para establecer la credencial\n");
+    }
+    else
+        printf("Comando no reconocido uid [-get|-set] [-l] [id]\n");
 }
 
 void showVar(const char *var) {
     extern char **environ;
 
-    // Obtener la dirección base
-    uintptr_t base_address = (uintptr_t)__builtin_frame_address(0);
+    uintptr_t base_address = (uintptr_t)__builtin_frame_address(0);  // Obtener la dirección base
 
-    // Obtener la dirección original en arg3
+    // Obtener la dirección en arg3
     char *arg3_value = getenv(var);
-    if (arg3_value != NULL) {
+    if (arg3_value != NULL)
         printf("Con arg3 main %s=%s(%p) @0x%lx\n", var, arg3_value, (void *)arg3_value, base_address);
-    } else {
+    else {
         printf("Variable %s not found\n", var);
         return;
     }
@@ -1452,20 +1473,19 @@ void showVar(const char *var) {
         }
     }
 
-    if (environ_value != NULL) {
+    if (environ_value != NULL)
         printf(" Con environ %s=%s(%p) @0x%lx\n", var, environ_value, (void *)environ_value, base_address);
-    } else {
+    else {
         printf("Variable %s not found\n", var);
         return;
     }
 
     // Imprimir la información de getenv
     char *getenv_value = getenv(var);
-    if (getenv_value != NULL) {
-        printf("   Con getenv %s(%p)\n",     getenv_value, (void *)getenv_value);
-    } else {
+    if (getenv_value != NULL)
+        printf("   Con getenv %s(%p)\n", getenv_value, (void *)getenv_value);
+    else
         printf("Variable %s not found\n", var);
-    }
 }
 
 void showAllVars() {
@@ -1610,14 +1630,14 @@ void subsvarByArg3(const char *var1, const char *var2, const char *value) {
 }
 
 void subsvarByEnviron(const char *var1, const char *var2, const char *value) {
-    // Verificar si var1 existe en environ
-    int pos = BuscarVariable((char *)var1, __environ);
-    if (pos == -1) {
+
+    int pos = BuscarVariable((char *)var1, __environ);   //Buscamos la variable
+
+    if (pos == -1) { //Si no existe mandamos error
         fprintf(stderr, "Imposible sustituir variable %s por %s: No such file or directory\n", var1, var2);
         return;
     }
 
-    // Cambiar el nombre de var1 a var2 en environ y mantener el mismo valor
     int len = strlen(var2) + 1 + strlen(value) + 1;
     char *aux = malloc(len);
     if (aux == NULL) {
@@ -1633,7 +1653,7 @@ void subsvarByEnviron(const char *var1, const char *var2, const char *value) {
 
 void cmd_subsvar(char *arguments[MAX_ARGUMENTS], int nArguments) {
     if (nArguments != 5) {
-        fprintf(stderr, "Error: Uso incorrecto. Uso: subsvar [-a|-e] var1 var2 valor\n");
+        fprintf(stderr, "Error: Uso incorrecto: subsvar [-a|-e] var1 var2 valor\n");
         return;
     }
 
@@ -1649,13 +1669,13 @@ void cmd_subsvar(char *arguments[MAX_ARGUMENTS], int nArguments) {
         // Acceder mediante environ
         subsvarByEnviron(var1, var2, valor);
     } else {
-        fprintf(stderr, "Error: Opción no reconocida. Uso: subsvar [-a|-e] var1 var2 valor\n");
+        fprintf(stderr, "Error: Opción no reconocida: subsvar [-a|-e] var1 var2 valor\n");
     }
 }
 
 void cmd_showenv(char *arguments[MAX_ARGUMENTS], int nArguments) {
     if (nArguments != 2) {
-        fprintf(stderr, "Error: Uso incorrecto. Uso: showenv [-environ|-addr]\n");
+        fprintf(stderr, "Error: Uso incorrecto: showenv [-environ|-addr]\n");
         return;
     }
 
@@ -1675,14 +1695,14 @@ void cmd_showenv(char *arguments[MAX_ARGUMENTS], int nArguments) {
         // Mostrar la dirección del tercer argumento de main (arg3)
         printf("main arg3: %p (almacenado en %p)\n", (void *)__environ, (void *)base_address);
     } else {
-        fprintf(stderr, "Error: Opción no reconocida. Uso: showenv [-environ|-addr]\n");
+        fprintf(stderr, "Error: Opción no reconocida: showenv [-environ|-addr]\n");
     }
 }
 
 void cmd_fork (tList *processList) {
 	pid_t pid;
     tItem p;
-	
+
 	if ((pid = fork()) == 0){
         for(p = first(*processList); p != NULL; p = next(p)) {
             removeElement(p, processList, freeItemP);
